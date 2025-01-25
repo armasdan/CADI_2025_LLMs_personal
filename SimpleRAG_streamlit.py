@@ -6,8 +6,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 # Configuración de Groq
-GROQ_API_KEY = "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"  # Reemplaza con tu clave API válida de Groq
-groq_model_name = "gemma2-9b-it"  # Cambia al modelo correcto disponible en Groq
+GROQ_API_KEY = "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"  # Tu clave API
+groq_model_name = "gemma2-9b-it"  # Tu modelo
 
 # Configurar Groq como LLM
 llm = ChatGroq(
@@ -61,7 +61,11 @@ if uploaded_file:
 
                 # Usar Groq para generar la respuesta
                 response = llm.invoke(input=input_text)
+
+                # Limitar la longitud de la respuesta a 1000 caracteres
+                formatted_response = response["content"][:1000]
                 st.write("**Respuesta:**")
-                st.write(response)
+                st.write(formatted_response)
+
             except Exception as e:
                 st.error(f"Error procesando la pregunta: {str(e)}")
