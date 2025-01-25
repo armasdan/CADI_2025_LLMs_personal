@@ -10,7 +10,7 @@ import streamlit as st
 
 # Configurar la URL de la API pública de DeepSeek
 DEEPSEEK_API_URL = "https://api.deepseek.com/query"  # Asegúrate de tener el endpoint correcto
-DEEPSEEK_PUBLIC_KEY = "tu_clave_publica"  # Reemplaza con tu clave pública de DeepSeek
+DEEPSEEK_PUBLIC_KEY = "sk-bb2275f7e8174a1a8f6b9ccac0276128"  # Reemplaza con tu clave pública de DeepSeek
 
 # Función para interactuar con DeepSeek
 def query_deepseek(question, context=""):
