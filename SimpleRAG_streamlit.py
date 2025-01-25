@@ -62,8 +62,8 @@ if uploaded_file:
                 # Usar Groq para generar la respuesta
                 response = llm.invoke(input=input_text)
 
-                # Limitar la longitud de la respuesta a 1000 caracteres
-                formatted_response = response["content"][:1000]
+                # Accede al contenido de la respuesta
+                formatted_response = response.content[:1000]  # Limitar a 1000 caracteres
                 st.write("**Respuesta:**")
                 st.write(formatted_response)
 
