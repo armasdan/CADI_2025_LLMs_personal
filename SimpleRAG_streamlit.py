@@ -1,12 +1,12 @@
 import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 # Configuración de Groq
-GROQ_API_KEY = "gsk_3mSVrZfP1an3NRUipOstWGdyb3FYTV8SlHd0PsycStixw7SGUoa"  # Reemplaza con tu clave válida
+GROQ_API_KEY = "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"  # Reemplaza con tu clave válida
 groq_model_name = "llama-3.1-70b-versatile"
 
 # Configurar Groq como LLM
