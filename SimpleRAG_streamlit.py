@@ -21,7 +21,7 @@ def process_pdf_with_faiss(pdf_text):
     vectorstore = FAISS.from_texts(chunks, embedding=embeddings)
     return vectorstore
 
-# Simulación de procesamiento IA
+# Obtener respuesta relevante
 def get_relevant_response(question, vectorstore):
     """Obtiene una respuesta relevante utilizando FAISS."""
     if not vectorstore:
@@ -36,7 +36,7 @@ def get_relevant_response(question, vectorstore):
 
 # Interfaz de Streamlit
 st.title("Chatbot del Reglamento del Laboratorio (IA Powered)")
-st.write("Sube un PDF y haz preguntas relacionadas con su contenido. Este chatbot utiliza inteligencia artificial para responder con precisión.")
+st.write("Sube un PDF y haz preguntas relacionadas con su contenido. Este chatbot utiliza inteligencia artificial para responder con precisión basándose en el contenido del documento.")
 
 # Cargar archivo PDF
 uploaded_file = st.file_uploader("Sube tu archivo PDF para análisis adicional", type="pdf")
@@ -58,5 +58,8 @@ question = st.text_input("Haz una pregunta:")
 if question:
     with st.spinner("Procesando con inteligencia artificial..."):
         answer = get_relevant_response(question, vectorstore)
-        st.write("**Respuesta:**")
-        st.markdown(answer)
+        if "No se ha cargado ningún documento" in answer or "Lo siento" in answer:
+            st.error(answer)
+        else:
+            st.write("**Respuesta:**")
+            st.markdown(answer)
