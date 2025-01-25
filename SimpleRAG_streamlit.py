@@ -2,10 +2,11 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
-from sentence_transformers import SentenceTransformer
+from langchain.embeddings import HuggingFaceEmbeddings
 
-# Modelo de embeddings de HuggingFace (local y gratuito)
-EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+# Configurar el modelo de embeddings de HuggingFace
+EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
 
 # Función para leer el contenido del PDF
 def read_pdf(file):
@@ -31,13 +32,9 @@ if uploaded_file:
         text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
         texts = text_splitter.split_text(pdf_text)
 
-        # Cargar el modelo de embeddings
+        # Crear el índice FAISS utilizando los embeddings
         with st.spinner("Generando el índice de búsqueda..."):
-            model = SentenceTransformer(EMBEDDING_MODEL)
-            embeddings = model.encode(texts)
-
-            # Crear índice FAISS
-            vectorstore = FAISS.from_texts(texts, model)
+            vectorstore = FAISS.from_texts(texts, embeddings)
 
     st.success("¡PDF procesado! Ahora puedes hacer preguntas.")
 
