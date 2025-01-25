@@ -3,16 +3,14 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_groq import ChatGroq
+from langchain.llms import HuggingFaceHub
 
-# Configuración de Groq
-GROQ_API_KEY = "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"  # Reemplaza con tu clave válida
-groq_model_name = "llama-2b"  # Cambia al modelo disponible en Groq
-
-# Configurar Groq como LLM
-llm = ChatGroq(
-    groq_api_key=GROQ_API_KEY,
-    model_name=groq_model_name,
+# Configurar HuggingFace como LLM
+huggingface_api_key = None  # Cambia a tu clave API si tienes una, o déjalo como `None` para usar modelos públicos.
+llm = HuggingFaceHub(
+    repo_id="google/flan-t5-large",  # Modelo HuggingFace
+    model_kwargs={"temperature": 0.5, "max_length": 512},
+    huggingfacehub_api_token=huggingface_api_key,
 )
 
 # Función para leer el contenido del PDF
@@ -24,7 +22,7 @@ def read_pdf(file):
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot Inteligente para PDFs con Groq")
+st.title("Chatbot Inteligente para PDFs con HuggingFace")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
 # Cargar archivo PDF
@@ -59,8 +57,8 @@ if uploaded_file:
                 # Crear el input como texto
                 input_text = f"Contexto: {context}\nPregunta: {question}"
 
-                # Usar Groq para generar la respuesta
-                response = llm.invoke(input=input_text)
+                # Usar HuggingFace para generar la respuesta
+                response = llm(input_text)
                 st.write("**Respuesta:**")
                 st.write(response)
             except Exception as e:
