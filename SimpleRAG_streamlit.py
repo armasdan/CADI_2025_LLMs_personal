@@ -2,15 +2,18 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain_huggingface.embeddings import HuggingFaceEmbeddings
-from transformers import pipeline
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 
-# Configurar el modelo de embeddings de HuggingFace
-EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+# Configuración de Groq
+GROQ_API_KEY = "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"  # Reemplaza con tu clave de Groq
+groq_model_name = "llama-3.1-70b-versatile"  # Modelo disponible en Groq
 
-# Configurar el modelo de generación de lenguaje HuggingFace
-generator = pipeline("text2text-generation", model="facebook/bart-large-cnn")
+# Configurar Groq como LLM
+llm = ChatGroq(
+    groq_api_key=GROQ_API_KEY,
+    model_name=groq_model_name,
+)
 
 # Función para leer el contenido del PDF
 def read_pdf(file):
@@ -21,7 +24,7 @@ def read_pdf(file):
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot Inteligente para PDFs (Gratis)")
+st.title("Chatbot Inteligente para PDFs con Groq")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
 # Cargar archivo PDF
@@ -37,6 +40,7 @@ if uploaded_file:
         texts = text_splitter.split_text(pdf_text)
 
         # Crear el índice FAISS utilizando los embeddings
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
         with st.spinner("Generando el índice de búsqueda..."):
             vectorstore = FAISS.from_texts(texts, embeddings)
 
@@ -51,12 +55,8 @@ if uploaded_file:
             docs = vectorstore.similarity_search(question, k=3)
             context = " ".join([doc.page_content for doc in docs])
 
-            # Usar el modelo de HuggingFace para generar la respuesta
-            response = generator(
-                f"Pregunta: {question}\nContexto: {context}\nRespuesta:",
-                max_length=200,
-                num_return_sequences=1,
-            )[0]["generated_text"]
+            # Usar Groq para generar la respuesta
+            response = llm.predict(context=f"Pregunta: {question}\nContexto: {context}")
 
         st.write("**Respuesta:**")
         st.write(response)
