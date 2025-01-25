@@ -1,3 +1,4 @@
+import os
 import requests
 from PyPDF2 import PdfReader
 from langchain_community.document_loaders import PyPDFLoader
