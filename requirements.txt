@@ -175,4 +175,6 @@ faiss-cpu
 sentence-transformers
 transformers
 torch
+python-dotenv
+
 
