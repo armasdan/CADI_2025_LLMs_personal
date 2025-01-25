@@ -11,9 +11,9 @@ import streamlit as st
 # Configuración del modelo HuggingFace
 HUGGINGFACE_API_TOKEN = "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"  # Reemplaza con tu token de HuggingFace
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-xl",  # Modelo de HuggingFace
+    repo_id="facebook/bart-large-cnn",  # Modelo público de HuggingFace
     model_kwargs={"temperature": 0.5, "max_length": 512},
-    huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,
+    huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,  # Dejar vacío si no se necesita
 )
 
 # Función para procesar el PDF
