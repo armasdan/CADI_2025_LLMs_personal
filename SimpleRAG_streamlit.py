@@ -9,14 +9,14 @@ from langchain.memory import ConversationBufferMemory
 import streamlit as st
 
 # Configuración del modelo HuggingFace
-HUGGINGFACE_API_TOKEN = "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"  # Reemplaza con tu token de HuggingFace
+HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "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")
 llm = HuggingFaceHub(
     repo_id="facebook/bart-large-cnn",  # Modelo público de HuggingFace
     model_kwargs={"temperature": 0.5, "max_length": 512},
     huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,  # Dejar vacío si no se necesita
 )
 
-# Función para procesar el PDF
+# Función para procesar el archivo PDF
 def process_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -58,5 +58,8 @@ if uploaded_file:
     question = st.text_input("Haz tu pregunta:")
     if question:
         with st.spinner("Pensando..."):
-            response = conversation_chain({"question": question})
-            st.write(f"**Respuesta:** {response['answer']}")
+            try:
+                response = conversation_chain({"question": question})
+                st.write(f"**Respuesta:** {response['answer']}")
+            except Exception as e:
+                st.error(f"Error procesando tu pregunta: {str(e)}")
