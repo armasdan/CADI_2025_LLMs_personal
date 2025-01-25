@@ -56,9 +56,12 @@ if uploaded_file:
                 docs = vectorstore.similarity_search(question, k=3)
                 context = " ".join([doc.page_content for doc in docs])
 
+                # Crear el input como texto
+                input_text = f"Contexto: {context}\nPregunta: {question}"
+
                 # Usar Groq para generar la respuesta
-                response = llm.invoke(input={"context": context})
+                response = llm.invoke(input=input_text)
                 st.write("**Respuesta:**")
-                st.write(response["output"])  # Ajusta según el formato de respuesta de Groq
+                st.write(response)
             except Exception as e:
                 st.error(f"Error procesando la pregunta: {str(e)}")
