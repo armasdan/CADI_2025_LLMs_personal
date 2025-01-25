@@ -1,20 +1,32 @@
+import requests
 from PyPDF2 import PdfReader
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_experimental.text_splitter import SemanticChunker
-from langchain.llms import OpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationalRetrievalChain
 from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
 import streamlit as st
-import os
 
-# Cargar variables de entorno
-load_dotenv()
+# Configurar la URL de la API pública de DeepSeek
+DEEPSEEK_API_URL = "https://api.deepseek.com/query"  # Asegúrate de tener el endpoint correcto
+DEEPSEEK_PUBLIC_KEY = "tu_clave_publica"  # Reemplaza con tu clave pública de DeepSeek
 
-# Configurar el modelo OpenAI
-llm = OpenAI(temperature=0.5, openai_api_key=os.getenv("OPENAI_API_KEY"))
+# Función para interactuar con DeepSeek
+def query_deepseek(question, context=""):
+    """
+    Realiza una consulta a la API pública de DeepSeek.
+    """
+    try:
+        response = requests.post(
+            DEEPSEEK_API_URL,
+            json={"query": question, "context": context},
+            headers={"Authorization": f"Bearer {DEEPSEEK_PUBLIC_KEY}"},
+        )
+        response.raise_for_status()
+        return response.json().get("response", "No se pudo obtener respuesta de DeepSeek.")
+    except Exception as e:
+        return f"Error al consultar DeepSeek: {str(e)}"
 
 # Función para cargar FAISS o crear uno nuevo
 def load_db(embeddings, pdf_path):
@@ -56,14 +68,8 @@ Question: {question}
 Helpful Answer:"""
 qa_prompt = ChatPromptTemplate.from_template(template)
 
-# Configurar la memoria y la cadena de conversación
+# Configurar la memoria para almacenar el historial
 memory = ConversationBufferMemory(memory_key='chat_history', return_messages=True)
-conversation_chain = ConversationalRetrievalChain.from_llm(
-    llm=llm,
-    retriever=retriever,
-    memory=memory,
-    combine_docs_chain_kwargs={"prompt": qa_prompt}
-)
 
 # Interfaz de Streamlit
 st.header('My Chatbot')
@@ -75,8 +81,13 @@ question = st.chat_input("Pregúntame algo")
 if question:
     st.write(f"**Tú:** {question}")
     try:
-        result = conversation_chain.invoke({"question": question, "chat_history": history})
-        st.write(f"**Bot:** {result['answer']}")
-        history.append((question, result["answer"]))
+        # Recuperar contexto del FAISS
+        context_docs = retriever.get_relevant_documents(question)
+        context = " ".join([doc.page_content for doc in context_docs])
+
+        # Realizar la consulta a DeepSeek
+        response = query_deepseek(question, context)
+        st.write(f"**Bot:** {response}")
+        history.append((question, response))
     except Exception as e:
         st.error(f"Error procesando tu pregunta: {str(e)}")
