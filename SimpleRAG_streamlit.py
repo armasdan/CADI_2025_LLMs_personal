@@ -9,7 +9,7 @@ from langchain.memory import ConversationBufferMemory
 import streamlit as st
 
 # Configuración del modelo HuggingFace
-HUGGINGFACE_API_TOKEN = "hf_xxxxxxxxxxxxxxxxxxxxxxx"  # Reemplaza con tu token de HuggingFace
+HUGGINGFACE_API_TOKEN = "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"  # Reemplaza con tu token de HuggingFace
 llm = HuggingFaceHub(
     repo_id="google/flan-t5-xl",  # Modelo de HuggingFace
     model_kwargs={"temperature": 0.5, "max_length": 512},
