@@ -2,12 +2,12 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 # Configuración de Groq
-GROQ_API_KEY = "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"  # Reemplaza con tu clave de Groq
-groq_model_name = "llama-3.1-70b-versatile"  # Modelo disponible en Groq
+GROQ_API_KEY = "gsk_3mSVrZfP1an3NRUipOstWGdyb3FYTV8SlHd0PsycStixw7SGUoa"  # Reemplaza con tu clave válida
+groq_model_name = "llama-3.1-70b-versatile"
 
 # Configurar Groq como LLM
 llm = ChatGroq(
@@ -51,12 +51,14 @@ if uploaded_file:
 
     if question:
         with st.spinner("Buscando la respuesta..."):
-            # Usar el índice FAISS para buscar los fragmentos más relevantes
-            docs = vectorstore.similarity_search(question, k=3)
-            context = " ".join([doc.page_content for doc in docs])
+            try:
+                # Usar el índice FAISS para buscar los fragmentos más relevantes
+                docs = vectorstore.similarity_search(question, k=3)
+                context = " ".join([doc.page_content for doc in docs])
 
-            # Usar Groq para generar la respuesta
-            response = llm.predict(context=f"Pregunta: {question}\nContexto: {context}")
-
-        st.write("**Respuesta:**")
-        st.write(response)
+                # Usar Groq para generar la respuesta
+                response = llm.predict(context=context)
+                st.write("**Respuesta:**")
+                st.write(response)
+            except Exception as e:
+                st.error(f"Error procesando la pregunta: {str(e)}")
