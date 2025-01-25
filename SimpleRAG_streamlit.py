@@ -22,7 +22,7 @@ from langchain_groq import ChatGroq
 
 from dotenv import load_dotenv
 load_dotenv()
-api_key= os.getenv('GROQ_API_KEY')
+api_key= os.getenv('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')
 model_name = 'llama-3.1-70b-versatile'
 
 groq_chat = ChatGroq(
