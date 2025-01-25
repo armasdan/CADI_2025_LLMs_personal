@@ -7,8 +7,8 @@ from langchain.embeddings import HuggingFaceInstructEmbeddings
 import streamlit as st
 
 # Configuración de DeepSeek
-DEEPSEEK_API_URL = "https://api.deepseek.com/query"  # Reemplaza con el endpoint correcto
-DEEPSEEK_PUBLIC_KEY = "sk-bb2275f7e8174a1a8f6b9ccac0276128"  # Reemplaza con tu clave pública de DeepSeek
+api_key = os.getenv('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')
+model_name = 'llama-3.1-70b-versatile'
 
 # Función para interactuar con DeepSeek
 def query_deepseek(question, context=""):
