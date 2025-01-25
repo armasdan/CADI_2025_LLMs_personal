@@ -1,17 +1,22 @@
-import streamlit as st
+import os
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceInstructEmbeddings
+from langchain.llms import HuggingFaceHub
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain.llms import OpenAI
+import streamlit as st
 
-# Configuración del modelo OpenAI
-OPENAI_API_KEY = os.getenv("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")  # Reemplaza con tu clave válida
-llm = OpenAI(temperature=0.5, openai_api_key=OPENAI_API_KEY)
+# Configuración del modelo HuggingFace
+HUGGINGFACE_API_TOKEN = "hf_xxxxxxxxxxxxxxxxxxxxxxx"  # Reemplaza con tu token de HuggingFace
+llm = HuggingFaceHub(
+    repo_id="google/flan-t5-xl",  # Modelo de HuggingFace
+    model_kwargs={"temperature": 0.5, "max_length": 512},
+    huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,
+)
 
-# Función para procesar el archivo PDF
+# Función para procesar el PDF
 def process_pdf(file):
     reader = PdfReader(file)
     text = ""
@@ -20,14 +25,14 @@ def process_pdf(file):
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot de PDF")
+st.title("Chatbot de PDF (HuggingFace)")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
 uploaded_file = st.file_uploader("Sube tu archivo PDF", type="pdf")
 
 if uploaded_file:
     # Procesar el PDF
-    with st.spinner("Leyendo el archivo PDF..."):
+    with st.spinner("Procesando el archivo PDF..."):
         pdf_text = process_pdf(uploaded_file)
 
     # Dividir el texto en fragmentos
