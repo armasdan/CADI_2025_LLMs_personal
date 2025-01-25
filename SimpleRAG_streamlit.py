@@ -35,37 +35,44 @@ if uploaded_file:
     with st.spinner("Procesando el archivo PDF..."):
         pdf_text = read_pdf(uploaded_file)
 
-        # Dividir el contenido del PDF en fragmentos manejables
-        text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        texts = text_splitter.split_text(pdf_text)
+        # Verificar si el PDF tiene texto
+        if not pdf_text.strip():
+            st.error("El PDF está vacío o no contiene texto extraíble.")
+        else:
+            # Dividir el contenido del PDF en fragmentos manejables
+            text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+            texts = text_splitter.split_text(pdf_text)
 
-        # Crear el índice FAISS utilizando los embeddings
-        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-        with st.spinner("Generando el índice de búsqueda..."):
-            vectorstore = FAISS.from_texts(texts, embeddings)
+            # Crear el índice FAISS utilizando los embeddings
+            embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            with st.spinner("Generando el índice de búsqueda..."):
+                vectorstore = FAISS.from_texts(texts, embeddings)
 
-    st.success("¡PDF procesado! Ahora puedes hacer preguntas.")
+            st.success("¡PDF procesado! Ahora puedes hacer preguntas.")
 
-    # Entrada del usuario para hacer preguntas
-    question = st.text_input("Haz una pregunta:")
+            # Entrada del usuario para hacer preguntas
+            question = st.text_input("Haz una pregunta:")
 
-    if question:
-        with st.spinner("Buscando la respuesta..."):
-            try:
-                # Usar el índice FAISS para buscar los fragmentos más relevantes
-                docs = vectorstore.similarity_search(question, k=3)
-                context = " ".join([doc.page_content for doc in docs])
+            if question:
+                with st.spinner("Buscando la respuesta..."):
+                    try:
+                        # Usar el índice FAISS para buscar los fragmentos más relevantes
+                        docs = vectorstore.similarity_search(question, k=3)
+                        if not docs:
+                            st.error("No se encontraron fragmentos relevantes en el PDF.")
+                        else:
+                            context = " ".join([doc.page_content for doc in docs])
 
-                # Crear el input como texto
-                input_text = f"Contexto: {context}\nPregunta: {question}"
+                            # Crear el input como texto
+                            input_text = f"Contexto: {context}\nPregunta: {question}"
 
-                # Usar Groq para generar la respuesta
-                response = llm.invoke(input=input_text)
+                            # Usar Groq para generar la respuesta
+                            response = llm.invoke(input=input_text)
 
-                # Accede al contenido de la respuesta
-                formatted_response = response.content[:1000]  # Limitar a 1000 caracteres
-                st.write("**Respuesta:**")
-                st.write(formatted_response)
+                            # Accede al contenido de la respuesta
+                            formatted_response = response.content.strip()[:1000]  # Limitar a 1000 caracteres
+                            st.write("**Respuesta:**")
+                            st.write(formatted_response)
 
-            except Exception as e:
-                st.error(f"Error procesando la pregunta: {str(e)}")
+                    except Exception as e:
+                        st.error(f"Error procesando la pregunta: {str(e)}")
