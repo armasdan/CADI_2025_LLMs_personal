@@ -1,36 +1,18 @@
-import os
-import requests
+import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceInstructEmbeddings
-import streamlit as st
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
+from langchain.llms import OpenAI
 
-# Configuración de DeepSeek
-DEEPSEEK_API_URL = "https://api.deepseek.com"  # Reemplaza con el endpoint correcto
-DEEPSEEK_PUBLIC_KEY = "sk-2bc067c8249a47d4a6a5a94ac4fe62bd"  # Reemplaza con tu clave pública de DeepSeek
-
-# Función para interactuar con DeepSeek
-def query_deepseek(question, context=""):
-    """
-    Envía una consulta a la API de DeepSeek.
-    """
-    try:
-        response = requests.post(
-            DEEPSEEK_API_URL,
-            json={"query": question, "context": context},
-            headers={"Authorization": f"Bearer {DEEPSEEK_PUBLIC_KEY}"},
-        )
-        response.raise_for_status()
-        return response.json().get("response", "No se obtuvo una respuesta de DeepSeek.")
-    except Exception as e:
-        return f"Error al consultar DeepSeek: {str(e)}"
+# Configuración del modelo OpenAI
+OPENAI_API_KEY = "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"  # Reemplaza con tu clave válida
+llm = OpenAI(temperature=0.5, openai_api_key=OPENAI_API_KEY)
 
 # Función para procesar el archivo PDF
 def process_pdf(file):
-    """
-    Convierte el contenido del PDF en texto.
-    """
     reader = PdfReader(file)
     text = ""
     for page in reader.pages:
@@ -38,14 +20,14 @@ def process_pdf(file):
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot de PDF con DeepSeek")
+st.title("Chatbot de PDF")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
 uploaded_file = st.file_uploader("Sube tu archivo PDF", type="pdf")
 
 if uploaded_file:
     # Procesar el PDF
-    with st.spinner("Procesando el archivo PDF..."):
+    with st.spinner("Leyendo el archivo PDF..."):
         pdf_text = process_pdf(uploaded_file)
 
     # Dividir el texto en fragmentos
@@ -56,17 +38,20 @@ if uploaded_file:
     embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-base")
     vectorstore = FAISS.from_texts(texts, embeddings)
 
+    # Configurar la memoria y la cadena conversacional
+    retriever = vectorstore.as_retriever()
+    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=retriever,
+        memory=memory,
+    )
+
     st.success("¡Archivo PDF procesado! Ahora puedes hacer preguntas.")
 
     # Entrada del usuario
     question = st.text_input("Haz tu pregunta:")
     if question:
-        with st.spinner("Consultando a DeepSeek..."):
-            # Recuperar contexto del índice FAISS
-            retriever = vectorstore.as_retriever()
-            docs = retriever.get_relevant_documents(question)
-            context = " ".join([doc.page_content for doc in docs])
-
-            # Realizar la consulta a DeepSeek
-            response = query_deepseek(question, context)
-            st.write(f"**Respuesta:** {response}")
+        with st.spinner("Pensando..."):
+            response = conversation_chain({"question": question})
+            st.write(f"**Respuesta:** {response['answer']}")
