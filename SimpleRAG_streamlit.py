@@ -1,65 +1,35 @@
-import os
-from PyPDF2 import PdfReader
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceInstructEmbeddings
-from langchain.llms import HuggingFaceHub
-from langchain.chains import ConversationalRetrievalChain
-from langchain.memory import ConversationBufferMemory
 import streamlit as st
+from PyPDF2 import PdfReader
 
-# Configuración del modelo HuggingFace
-HUGGINGFACE_API_TOKEN = os.getenv("HUGGINGFACE_API_TOKEN", "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")
-llm = HuggingFaceHub(
-    repo_id="facebook/bart-large-cnn",  # Modelo público de HuggingFace
-    model_kwargs={"temperature": 0.5, "max_length": 512},
-    huggingfacehub_api_token=HUGGINGFACE_API_TOKEN,  # Dejar vacío si no se necesita
-)
-
-# Función para procesar el archivo PDF
-def process_pdf(file):
-    reader = PdfReader(file)
+# Función para leer el contenido del PDF
+def read_pdf(file):
+    pdf_reader = PdfReader(file)
     text = ""
-    for page in reader.pages:
+    for page in pdf_reader.pages:
         text += page.extract_text()
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot de PDF (HuggingFace)")
+st.title("Chatbot PDF")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
+# Cargar archivo PDF
 uploaded_file = st.file_uploader("Sube tu archivo PDF", type="pdf")
 
 if uploaded_file:
-    # Procesar el PDF
-    with st.spinner("Procesando el archivo PDF..."):
-        pdf_text = process_pdf(uploaded_file)
+    # Leer y mostrar el contenido del PDF
+    with st.spinner("Leyendo el archivo PDF..."):
+        pdf_text = read_pdf(uploaded_file)
 
-    # Dividir el texto en fragmentos
-    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    texts = text_splitter.split_text(pdf_text)
+    st.success("PDF procesado correctamente. Puedes hacer preguntas.")
 
-    # Crear el índice FAISS
-    embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-base")
-    vectorstore = FAISS.from_texts(texts, embeddings)
+    # Entrada del usuario para hacer preguntas
+    question = st.text_input("Haz una pregunta:")
 
-    # Configurar la memoria y la cadena conversacional
-    retriever = vectorstore.as_retriever()
-    memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-    conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=llm,
-        retriever=retriever,
-        memory=memory,
-    )
-
-    st.success("¡Archivo PDF procesado! Ahora puedes hacer preguntas.")
-
-    # Entrada del usuario
-    question = st.text_input("Haz tu pregunta:")
     if question:
         with st.spinner("Pensando..."):
-            try:
-                response = conversation_chain({"question": question})
-                st.write(f"**Respuesta:** {response['answer']}")
-            except Exception as e:
-                st.error(f"Error procesando tu pregunta: {str(e)}")
+            # Responder la pregunta de forma simple buscando palabras clave en el texto
+            if question.lower() in pdf_text.lower():
+                st.write("**Respuesta:** Parece que tu pregunta está en el PDF.")
+            else:
+                st.write("**Respuesta:** No encontré información relacionada en el PDF.")
