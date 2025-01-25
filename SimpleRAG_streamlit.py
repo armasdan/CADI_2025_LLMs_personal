@@ -61,16 +61,23 @@ if uploaded_file:
                         if not docs:
                             st.error("No se encontraron fragmentos relevantes en el PDF.")
                         else:
-                            context = " ".join([doc.page_content for doc in docs])
+                            # Construir el contexto a partir de los fragmentos relevantes
+                            context = "\n".join([f"- {doc.page_content}" for doc in docs])
 
-                            # Crear el input como texto
-                            input_text = f"Contexto: {context}\nPregunta: {question}"
+                            # Crear el input para el modelo
+                            input_text = f"""
+                            Estás analizando un documento y respondiendo preguntas del usuario.
+                            Contexto relevante extraído del documento:
+                            {context}
+                            Pregunta: {question}
+                            Responde de manera breve y precisa.
+                            """
 
                             # Usar Groq para generar la respuesta
                             response = llm.invoke(input=input_text)
 
-                            # Accede al contenido de la respuesta
-                            formatted_response = response.content.strip()[:1000]  # Limitar a 1000 caracteres
+                            # Limitar la longitud de la respuesta a 1000 caracteres
+                            formatted_response = response.content.strip()[:1000]
                             st.write("**Respuesta:**")
                             st.write(formatted_response)
 
