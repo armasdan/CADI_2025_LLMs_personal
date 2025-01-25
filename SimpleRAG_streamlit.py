@@ -3,10 +3,14 @@ from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
+from transformers import pipeline
 
 # Configurar el modelo de embeddings de HuggingFace
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL_NAME)
+
+# Configurar el modelo de generación de lenguaje HuggingFace
+generator = pipeline("text2text-generation", model="facebook/bart-large-cnn")
 
 # Función para leer el contenido del PDF
 def read_pdf(file):
@@ -17,7 +21,7 @@ def read_pdf(file):
     return text
 
 # Interfaz de Streamlit
-st.title("Chatbot Inteligente para PDFs")
+st.title("Chatbot Inteligente para PDFs (Gratis)")
 st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
 # Cargar archivo PDF
@@ -43,9 +47,16 @@ if uploaded_file:
 
     if question:
         with st.spinner("Buscando la respuesta..."):
-            # Usar el índice FAISS para buscar el fragmento más relevante
+            # Usar el índice FAISS para buscar los fragmentos más relevantes
             docs = vectorstore.similarity_search(question, k=3)
-            response = " ".join([doc.page_content for doc in docs])
+            context = " ".join([doc.page_content for doc in docs])
+
+            # Usar el modelo de HuggingFace para generar la respuesta
+            response = generator(
+                f"Pregunta: {question}\nContexto: {context}\nRespuesta:",
+                max_length=200,
+                num_return_sequences=1,
+            )[0]["generated_text"]
 
         st.write("**Respuesta:**")
         st.write(response)
