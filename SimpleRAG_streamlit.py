@@ -2,7 +2,7 @@ import streamlit as st
 from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 # Configuración de Groq
@@ -57,7 +57,7 @@ if uploaded_file:
                 context = " ".join([doc.page_content for doc in docs])
 
                 # Usar Groq para generar la respuesta
-                response = llm.predict(context=context)
+                response = llm.invoke(context=context)
                 st.write("**Respuesta:**")
                 st.write(response)
             except Exception as e:
