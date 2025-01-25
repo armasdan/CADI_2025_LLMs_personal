@@ -1,22 +1,19 @@
 import os
 import requests
 from PyPDF2 import PdfReader
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain.memory import ConversationBufferMemory
-from langchain.chains import ConversationalRetrievalChain
-from langchain_core.prompts import ChatPromptTemplate
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.vectorstores import FAISS
+from langchain.embeddings import HuggingFaceInstructEmbeddings
 import streamlit as st
 
-# Configurar la API de DeepSeek
-DEEPSEEK_API_URL = "https://api.deepseek.com/query"  # URL de la API pública
-DEEPSEEK_PUBLIC_KEY = "sk-bb2275f7e8174a1a8f6b9ccac0276128"  # Reemplaza con tu clave pública
+# Configuración de DeepSeek
+DEEPSEEK_API_URL = "https://api.deepseek.com/query"  # Reemplaza con el endpoint correcto
+DEEPSEEK_PUBLIC_KEY = "tu_clave_publica"  # Reemplaza con tu clave pública de DeepSeek
 
-# Función para consultar la API de DeepSeek
+# Función para interactuar con DeepSeek
 def query_deepseek(question, context=""):
     """
-    Consulta la API de DeepSeek con una pregunta y un contexto opcional.
+    Envía una consulta a la API de DeepSeek.
     """
     try:
         response = requests.post(
@@ -29,72 +26,47 @@ def query_deepseek(question, context=""):
     except Exception as e:
         return f"Error al consultar DeepSeek: {str(e)}"
 
-# Función para cargar o construir FAISS
-def load_db(embeddings, pdf_path):
-    try:
-        text = ""
-        with open(pdf_path, "rb") as file:
-            pdf_reader = PdfReader(file)
-            for page in pdf_reader.pages:
-                text += page.extract_text()
-
-        text_splitter = SemanticChunker(
-            embeddings, breakpoint_threshold_type="percentile"
-        )
-        docs = text_splitter.split_text(text)
-        vectorstore = FAISS.from_texts(docs, embeddings)
-        return vectorstore
-    except Exception as e:
-        st.error(f"Error al procesar el archivo PDF: {str(e)}")
-        return None
-
-# Inicializar embeddings
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings
-embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-xl")
-
-# Ruta del archivo PDF
-pdf_path = "PeterPan.pdf"
-index_path = "faiss_index"
-
-# Cargar o construir el índice FAISS
-if not os.path.exists(index_path):
-    vectorstore = load_db(embeddings, pdf_path)
-    if vectorstore:
-        vectorstore.save_local(index_path)
-else:
-    vectorstore = FAISS.load_local(index_path, embeddings=embeddings, allow_dangerous_deserialization=True)
-
-# Configurar el retriever
-retriever = vectorstore.as_retriever()
-
-# Plantilla del prompt
-template = """Eres un asistente para contestar preguntas del usuario sobre el contenido del archivo subido, que trata de la historia de Peter Pan. 
-Contesta siempre en español y agradece al usuario por preguntar. Si las preguntas son sobre otro tema, contesta que no puedes contestar.
-{context}
-Question: {question}
-Helpful Answer:"""
-qa_prompt = ChatPromptTemplate.from_template(template)
-
-# Configurar la memoria para el historial
-memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
+# Función para procesar el archivo PDF
+def process_pdf(file):
+    """
+    Convierte el contenido del PDF en texto.
+    """
+    reader = PdfReader(file)
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    return text
 
 # Interfaz de Streamlit
-st.header("My Chatbot")
-st.write("Hola, estoy aquí para ayudarte.")
-history = []
+st.title("Chatbot de PDF con DeepSeek")
+st.write("Sube un archivo PDF y haz preguntas sobre su contenido.")
 
-# Entrada del usuario
-question = st.chat_input("Pregúntame algo")
-if question:
-    st.write(f"**Tú:** {question}")
-    try:
-        # Recuperar contexto del FAISS
-        context_docs = retriever.invoke({"query": question})
-        context = " ".join([doc.page_content for doc in context_docs])
+uploaded_file = st.file_uploader("Sube tu archivo PDF", type="pdf")
 
-        # Realizar la consulta a DeepSeek
-        response = query_deepseek(question, context)
-        st.write(f"**Bot:** {response}")
-        history.append((question, response))
-    except Exception as e:
-        st.error(f"Error procesando tu pregunta: {str(e)}")
+if uploaded_file:
+    # Procesar el PDF
+    with st.spinner("Procesando el archivo PDF..."):
+        pdf_text = process_pdf(uploaded_file)
+
+    # Dividir el texto en fragmentos
+    text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.split_text(pdf_text)
+
+    # Crear el índice FAISS
+    embeddings = HuggingFaceInstructEmbeddings(model_name="hkunlp/instructor-base")
+    vectorstore = FAISS.from_texts(texts, embeddings)
+
+    st.success("¡Archivo PDF procesado! Ahora puedes hacer preguntas.")
+
+    # Entrada del usuario
+    question = st.text_input("Haz tu pregunta:")
+    if question:
+        with st.spinner("Consultando a DeepSeek..."):
+            # Recuperar contexto del índice FAISS
+            retriever = vectorstore.as_retriever()
+            docs = retriever.get_relevant_documents(question)
+            context = " ".join([doc.page_content for doc in docs])
+
+            # Realizar la consulta a DeepSeek
+            response = query_deepseek(question, context)
+            st.write(f"**Respuesta:** {response}")
