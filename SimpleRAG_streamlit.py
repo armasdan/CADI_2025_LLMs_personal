@@ -7,7 +7,7 @@ from langchain_groq import ChatGroq
 
 # Configuración de Groq
 GROQ_API_KEY = "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"  # Reemplaza con tu clave API válida de Groq
-groq_model_name = "llama-3.1-70b-versatile"  # Cambia al modelo correcto disponible en Groq
+groq_model_name = "gemma2-9b-it"  # Cambia al modelo correcto disponible en Groq
 
 # Configurar Groq como LLM
 llm = ChatGroq(
