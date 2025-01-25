@@ -8,7 +8,7 @@ from langchain.memory import ConversationBufferMemory
 from langchain.llms import OpenAI
 
 # Configuración del modelo OpenAI
-OPENAI_API_KEY = "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"  # Reemplaza con tu clave válida
+OPENAI_API_KEY = os.getenv("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")  # Reemplaza con tu clave válida
 llm = OpenAI(temperature=0.5, openai_api_key=OPENAI_API_KEY)
 
 # Función para procesar el archivo PDF
