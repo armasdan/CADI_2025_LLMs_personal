@@ -29,7 +29,7 @@ def get_relevant_response(question, vectorstore):
 
     docs = vectorstore.similarity_search(question, k=3)
     if docs:
-        response = "\n\n".join([doc.page_content for doc in docs])
+        response = "\n\n".join([f"- {doc.page_content.strip()}" for doc in docs])
         return f"He encontrado información relevante en el documento:\n\n{response}"
     else:
         return "Lo siento, no he encontrado información relevante en el documento para responder tu pregunta."
@@ -59,4 +59,4 @@ if question:
     with st.spinner("Procesando con inteligencia artificial..."):
         answer = get_relevant_response(question, vectorstore)
         st.write("**Respuesta:**")
-        st.write(answer)
+        st.markdown(answer)
