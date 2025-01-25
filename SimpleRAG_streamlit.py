@@ -6,8 +6,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 
 # Configuración de Groq
-GROQ_API_KEY = "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"  # Reemplaza con tu clave válida
-groq_model_name = "llama-3b"  # Cambia por un modelo válido en Groq
+GROQ_API_KEY = "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"  # Reemplaza con tu clave válida
+groq_model_name = "llama-2b"  # Cambia al modelo disponible en Groq
 
 # Configurar Groq como LLM
 llm = ChatGroq(
